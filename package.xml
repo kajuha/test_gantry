@@ -50,10 +50,13 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
   <!-- 다른 패키지가 먼저 빌드되도록 하려면 package.xml에 build_depend를 추가할 것 -->
   <build_depend>gantry_robot</build_depend>
   <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>rospy</build_export_depend>
   <exec_depend>roscpp</exec_depend>
+  <exec_depend>rospy</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

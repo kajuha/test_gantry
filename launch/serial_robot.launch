@@ -2,6 +2,6 @@
 	<include file="$(find gantry_robot)/launch/serial_robot.launch">
 	</include>
 
-    <node pkg="test_gantry_robot" type="test_gantry_robot" name="test_gantry_robot" output="screen">
+    <node pkg="test_gantry_robot" type="test_gantry_robot_cpp" name="test_gantry_robot" output="screen">
     </node>
 </launch>

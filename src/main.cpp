@@ -19,14 +19,14 @@ bool serviceDoneCallback(gantry_robot::Command::Request &req, gantry_robot::Comm
     ros::Time time = ros::Time::now();
 
 	g_done_srv = req.command;
-	ROS_INFO("service done [command:%d][ts:%lf]", g_done_srv, ros::Time::now().toSec());
+	// ROS_INFO("service done [command:%d][ts:%lf]", g_done_srv, ros::Time::now().toSec());
 	res.success = SRV_SUCCESS;
 
     return true;
 }
 
 enum class ActionState {
-	INIT, LOCATION1, LOCATION2, LOCATION3, LOCATION4, HOME, IDLE
+	INIT, LOCATION1, LOCATION2, LOCATION3, LOCATION4, HOME, STOP, STOP_INIT, ERROR, ERROR_INIT, IDLE
 };
 
 enum class CommandState {
@@ -40,27 +40,22 @@ int main(int argc, char* argv[]) {
     ros::ServiceClient client_command = nh.serviceClient<gantry_robot::Command>("/gantry_robot/gantry_robot_command");
     ros::ServiceClient client_location = nh.serviceClient<gantry_robot::Location>("/gantry_robot/gantry_robot_location");
 
-    ros::ServiceServer service_done = nh.advertiseService("gantry_robot_done", serviceDoneCallback);
+    ros::ServiceServer service_done = nh.advertiseService("/gantry_robot/gantry_robot_done", serviceDoneCallback);
 
     ros::Subscriber sub_info = nh.subscribe("/gantry_robot/gantry_robot_info", 10, infoCallback);
 
     int main_hz = MAIN_HZ;
 
-	#define STEP_TIME 1.0
-	double ts_run;
-	double ts_cur;
-	double ts_pre;
-	double ts_diff;
-
 	ros::Rate r(main_hz);
 
 	ActionState actionState = ActionState::INIT;
-
-#define LOC_ERROR_GANTRY	0.0001
-#define LOC_ERROR_SERIAL	0.1
-#define LOC_ERROR			LOC_ERROR_SERIAL
+	
 	gantry_robot::Location location_srv;
 	gantry_robot::Command command_srv;
+
+	while(ros::ok() && !((int32_t)info_.header.stamp.toSec())) {
+		ros::spinOnce();
+	}
 	
 	// 초기화 요청
 	g_done_srv = NOT_DONE;
@@ -129,11 +124,57 @@ int main(int argc, char* argv[]) {
 			break;
 			case ActionState::HOME:
 				if (g_done_srv == (int32_t)CommandState::HOME) {
-					actionState = ActionState::IDLE;
+					actionState = ActionState::STOP;
 					ROS_INFO("HOME done");
+
+					g_done_srv = NOT_DONE;
+					command_srv.request.command = (int32_t)CommandState::STOP;
+					client_command.call(command_srv);
+				}
+			break;
+			case ActionState::STOP:
+				if (g_done_srv == (int32_t)CommandState::STOP) {
+					actionState = ActionState::STOP_INIT;
+					ROS_INFO("STOP done");
+
+					g_done_srv = NOT_DONE;
+					command_srv.request.command = (int32_t)CommandState::INIT;
+					client_command.call(command_srv);
+				}
+			break;
+			case ActionState::STOP_INIT:
+				if (g_done_srv == (int32_t)CommandState::INIT) {
+					actionState = ActionState::ERROR;
+					ROS_INFO("STOP_INIT done");
+
+					g_done_srv = NOT_DONE;
+					command_srv.request.command = (int32_t)CommandState::ERROR;
+					client_command.call(command_srv);
+				}
+			break;
+			case ActionState::ERROR:
+				if (g_done_srv == (int32_t)CommandState::ERROR) {
+					actionState = ActionState::ERROR_INIT;
+					ROS_INFO("ERROR done");
+
+					g_done_srv = NOT_DONE;
+					command_srv.request.command = (int32_t)CommandState::INIT;
+					client_command.call(command_srv);
+				}
+			break;
+			case ActionState::ERROR_INIT:
+				if (g_done_srv == (int32_t)CommandState::INIT) {
+					actionState = ActionState::IDLE;
+					ROS_INFO("ERROR_INIT done");
 				}
 			break;
 			case ActionState::IDLE:
+				ROS_INFO("finished");
+				return 0;
+			break;
+			default:
+				ROS_INFO("Unknown switch-case");
+				return -1;
 			break;
 		}
 
