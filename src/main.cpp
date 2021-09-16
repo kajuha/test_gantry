@@ -4,6 +4,11 @@
 #include <gantry_robot/Location.h>
 #include <gantry_robot/Command.h>
 
+#define SRV_SUCCESS	1
+#define NOT_DONE	-1
+
+#define MAIN_HZ		1
+
 gantry_robot::Info info_;
 void infoCallback(const gantry_robot::Info& info) {
 	info_ = info;
@@ -15,7 +20,7 @@ bool serviceDoneCallback(gantry_robot::Command::Request &req, gantry_robot::Comm
 
 	g_done_srv = req.command;
 	ROS_INFO("service done [command:%d][ts:%lf]", g_done_srv, ros::Time::now().toSec());
-	res.success = 1;
+	res.success = SRV_SUCCESS;
 
     return true;
 }
@@ -25,7 +30,7 @@ enum class ActionState {
 };
 
 enum class CommandState {
-	INIT, HOME, LOCATION, POSITION, JOG, STOP, IDLE, ERROR
+	INIT, HOME, LOCATION, POSITION, JOG, STOP, IDLE, ERROR, NOT_SET=-1
 };
 
 int main(int argc, char* argv[]) {
@@ -39,7 +44,7 @@ int main(int argc, char* argv[]) {
 
     ros::Subscriber sub_info = nh.subscribe("/gantry_robot/gantry_robot_info", 10, infoCallback);
 
-    int main_hz = 1000;
+    int main_hz = MAIN_HZ;
 
 	#define STEP_TIME 1.0
 	double ts_run;
@@ -56,14 +61,20 @@ int main(int argc, char* argv[]) {
 #define LOC_ERROR			LOC_ERROR_SERIAL
 	gantry_robot::Location location_srv;
 	gantry_robot::Command command_srv;
+	
+	// 초기화 요청
+	g_done_srv = NOT_DONE;
+	command_srv.request.command = (int32_t)CommandState::INIT;
+	client_command.call(command_srv);
 
 	while (ros::ok()) {
-		#if 1
 		switch (actionState) {
 			case ActionState::INIT:
-				if (info_.axisX.org && info_.axisY.org && info_.axisZ.org) {
+				if (g_done_srv == (int32_t)CommandState::INIT) {
 					actionState = ActionState::LOCATION1;
-					printf("INIT done\n");
+					ROS_INFO("INIT done");
+
+					g_done_srv = NOT_DONE;
 					location_srv.request.x = 0.0;
 					location_srv.request.y = 0.0;
 					location_srv.request.z = 0.0;
@@ -71,16 +82,11 @@ int main(int argc, char* argv[]) {
 				}
 			break;
 			case ActionState::LOCATION1:
-#if 0			
-				if (info_.axisX.eos && info_.axisY.eos && info_.axisZ.eos &&
-					std::abs(info_.axisX.location-location_srv.request.x) < LOC_ERROR &&
-#else					
-				if (std::abs(info_.axisX.location-location_srv.request.x) < LOC_ERROR &&
-#endif					
-					std::abs(info_.axisY.location-location_srv.request.y) < LOC_ERROR &&
-					std::abs(info_.axisZ.location-location_srv.request.z) < LOC_ERROR) {
+				if (g_done_srv == (int32_t)CommandState::LOCATION) {
 					actionState = ActionState::LOCATION2;
-					printf("LOCATION1 done\n");
+					ROS_INFO("LOCATION1 done");
+
+					g_done_srv = NOT_DONE;
 					location_srv.request.x = 0.0;
 					location_srv.request.y = 0.0;
 					location_srv.request.z = 0.0;
@@ -88,16 +94,11 @@ int main(int argc, char* argv[]) {
 				}
 			break;
 			case ActionState::LOCATION2:
-#if 0			
-				if (info_.axisX.eos && info_.axisY.eos && info_.axisZ.eos &&
-					std::abs(info_.axisX.location-location_srv.request.x) < LOC_ERROR &&
-#else					
-				if (std::abs(info_.axisX.location-location_srv.request.x) < LOC_ERROR &&
-#endif					
-					std::abs(info_.axisY.location-location_srv.request.y) < LOC_ERROR &&
-					std::abs(info_.axisZ.location-location_srv.request.z) < LOC_ERROR) {
+				if (g_done_srv == (int32_t)CommandState::LOCATION) {
 					actionState = ActionState::LOCATION3;
-					printf("LOCATION2 done\n");
+					ROS_INFO("LOCATION2 done");
+
+					g_done_srv = NOT_DONE;
 					location_srv.request.x = 0.0;
 					location_srv.request.y = 0.0;
 					location_srv.request.z = 0.0;
@@ -105,16 +106,11 @@ int main(int argc, char* argv[]) {
 				}
 			break;
 			case ActionState::LOCATION3:
-#if 0			
-				if (info_.axisX.eos && info_.axisY.eos && info_.axisZ.eos &&
-					std::abs(info_.axisX.location-location_srv.request.x) < LOC_ERROR &&
-#else					
-				if (std::abs(info_.axisX.location-location_srv.request.x) < LOC_ERROR &&
-#endif					
-					std::abs(info_.axisY.location-location_srv.request.y) < LOC_ERROR &&
-					std::abs(info_.axisZ.location-location_srv.request.z) < LOC_ERROR) {
+				if (g_done_srv == (int32_t)CommandState::LOCATION) {
 					actionState = ActionState::LOCATION4;
-					printf("LOCATION3 done\n");
+					ROS_INFO("LOCATION3 done");
+
+					g_done_srv = NOT_DONE;
 					location_srv.request.x = 0.0;
 					location_srv.request.y = 0.0;
 					location_srv.request.z = 0.0;
@@ -122,54 +118,24 @@ int main(int argc, char* argv[]) {
 				}
 			break;
 			case ActionState::LOCATION4:
-#if 0			
-				if (info_.axisX.eos && info_.axisY.eos && info_.axisZ.eos &&
-					std::abs(info_.axisX.location-location_srv.request.x) < LOC_ERROR &&
-#else					
-				if (std::abs(info_.axisX.location-location_srv.request.x) < LOC_ERROR &&
-#endif					
-					std::abs(info_.axisY.location-location_srv.request.y) < LOC_ERROR &&
-					std::abs(info_.axisZ.location-location_srv.request.z) < LOC_ERROR) {
+				if (g_done_srv == (int32_t)CommandState::LOCATION) {
 					actionState = ActionState::HOME;
-					printf("LOCATION4 done\n");
-					command_srv.request.command = 1;
+					ROS_INFO("LOCATION4 done");
+
+					g_done_srv = NOT_DONE;
+					command_srv.request.command = (int32_t)CommandState::HOME;
 					client_command.call(command_srv);
 				}
 			break;
 			case ActionState::HOME:
-				if (info_.axisX.org && info_.axisY.org && info_.axisZ.org &&
-					std::abs(info_.axisX.location-0.0) < LOC_ERROR &&
-					std::abs(info_.axisY.location-0.0) < LOC_ERROR &&
-					std::abs(info_.axisZ.location-0.0) < LOC_ERROR) {
+				if (g_done_srv == (int32_t)CommandState::HOME) {
 					actionState = ActionState::IDLE;
-					printf("HOME done\n");
+					ROS_INFO("HOME done");
 				}
 			break;
 			case ActionState::IDLE:
 			break;
 		}
-		#else
-		location_srv.request.x = 0.0;
-		location_srv.request.y = 0.0;
-		location_srv.request.z = 0.0;
-		client_location.call(location_srv);
-		sleep(3);
-		location_srv.request.x = 0.6;
-		location_srv.request.y = 0.0;
-		location_srv.request.z = 0.2;
-		client_location.call(location_srv);
-		sleep(3);
-		location_srv.request.x = 0.6;
-		location_srv.request.y = 0.4;
-		location_srv.request.z = 0.0;
-		client_location.call(location_srv);
-		sleep(3);
-		location_srv.request.x = 0.0;
-		location_srv.request.y = 0.4;
-		location_srv.request.z = 0.2;
-		client_location.call(location_srv);
-		sleep(3);
-		#endif
 
 		ros::spinOnce();
 		r.sleep();
