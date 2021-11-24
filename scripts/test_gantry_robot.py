@@ -10,7 +10,8 @@ from gantry_robot.srv import *
 SRV_SUCCESS	= 1
 NOT_DONE = -1
 
-MAIN_HZ = 1
+# MAIN_HZ = 1
+MAIN_HZ = 1000
 
 g_info = Info()
 def infoCallback(info):

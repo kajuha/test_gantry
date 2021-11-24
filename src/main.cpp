@@ -7,7 +7,8 @@
 #define SRV_SUCCESS	1
 #define NOT_DONE	-1
 
-#define MAIN_HZ		1
+// #define MAIN_HZ		1
+#define MAIN_HZ		1000
 
 gantry_robot::Info info_;
 void infoCallback(const gantry_robot::Info& info) {
