@@ -3,6 +3,6 @@
         <arg name="message_display" value="screen"/>
 	</include>
 
-    <node pkg="test_gantry_robot" type="test_gantry_robot_cpp" name="test_gantry_robot" output="screen">
+    <node pkg="test_gantry" type="test_gantry_cpp" name="test_gantry" output="screen">
     </node>
 </launch>

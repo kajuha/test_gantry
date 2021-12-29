@@ -51,7 +51,7 @@ class CommandState(Enum):
 
 def main():
     global g_done_srv
-    rospy.init_node('test_gantry_robot')
+    rospy.init_node('test_gantry')
     
     rospy.wait_for_service('/gantry_robot/gantry_robot_command')
     client_command = rospy.ServiceProxy('/gantry_robot/gantry_robot_command', Command)

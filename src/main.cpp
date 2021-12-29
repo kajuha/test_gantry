@@ -35,7 +35,7 @@ enum class CommandState {
 };
 
 int main(int argc, char* argv[]) {
-	ros::init(argc, argv, "test_gantry_robot");
+	ros::init(argc, argv, "test_gantry");
 	ros::NodeHandle nh("~");
 
     ros::ServiceClient client_command = nh.serviceClient<gantry_robot::Command>("/gantry_robot/gantry_robot_command");
