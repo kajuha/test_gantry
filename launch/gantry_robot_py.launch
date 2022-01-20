@@ -1,0 +1,8 @@
+<launch>
+	<include file="$(find gantry_robot)/launch/gantry_robot_preset.launch">
+        <arg name="message_display" value="screen"/>
+	</include>
+
+    <node pkg="test_gantry" type="test_gantry.py" name="test_gantry" output="screen">
+    </node>
+</launch>

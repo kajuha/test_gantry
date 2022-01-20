@@ -77,7 +77,7 @@ def main():
                 rospy.loginfo('INIT done')
 
                 g_done_srv = NOT_DONE
-                x = 0.0
+                x = 0.1
                 y = 0.0
                 z = 0.0
                 client_location(x, y, z)
@@ -87,8 +87,8 @@ def main():
                 rospy.loginfo('LOCATION1 done')
 
                 g_done_srv = NOT_DONE
-                x = 0.0
-                y = 0.0
+                x = 0.1
+                y = 0.1
                 z = 0.0
                 client_location(x, y, z)
         elif actionState == ActionState.LOCATION2:
@@ -98,7 +98,7 @@ def main():
 
                 g_done_srv = NOT_DONE
                 x = 0.0
-                y = 0.0
+                y = 0.1
                 z = 0.0
                 client_location(x, y, z)
         elif actionState == ActionState.LOCATION3:
